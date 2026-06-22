@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16
+    container_name: ciip_db
+    environment:
+      POSTGRES_DB: ciip
+      POSTGRES_USER: ciip_user
+      POSTGRES_PASSWORD: ciip_password
+    ports:
+      - "5434:5434"
+    volumes:
+      - ciip_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ciip_user -d ciip"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+    container_name: ciip_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  ciip_postgres_data:
